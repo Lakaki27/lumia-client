@@ -4,10 +4,10 @@ import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class Main {
     public static void main(String[] args) {
-        // Set the Look and Feel to FlatLaf or other theme
         try {
             FlatLaf.registerCustomDefaultsSource("com.lumia.themes");
             FlatLightLaf.setup();
@@ -16,12 +16,23 @@ public class Main {
             e.printStackTrace();
         }
 
-        // Create MainFrame and show it
         MainFrame mainFrame = new MainFrame();
+        mainFrame.setUndecorated(true);
+
+        GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice device = env.getDefaultScreenDevice();
+
+        device.setFullScreenWindow(mainFrame);
+
         mainFrame.setVisible(true);
 
-        // Check login state and replace content in MainFrame if necessary
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                mainFrame.getBarcodeField().requestFocusInWindow();
+            }
+        });
+
         mainFrame.checkAndHandleLoginState();
     }
 }
-

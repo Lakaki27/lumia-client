@@ -1,6 +1,7 @@
 package com.lumia;
 
 import org.json.*;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -44,10 +45,8 @@ public class ApiRequest {
         }
     }
 
-    public LoginResponse makeLoginRequest (String email, String password) {
+    public LoginResponse makeLoginRequest(String email, String password) {
         String apiUrl = apiUrlPrefix.concat("/auth/login");
-
-        System.out.println(email.concat(" and ".concat(password)));
 
         Map<String, String> formData = Map.of(
                 "email", email,
@@ -90,12 +89,39 @@ public class ApiRequest {
                 JSONObject jsonObject = new JSONObject(response.body());
                 return new LoginResponse(true, jsonObject.getString("token"));
             } else {
-                System.out.println(response.body());
                 JSONObject jsonObject = new JSONObject(response.body());
                 return new LoginResponse(false, jsonObject.getString("message"));
             }
         } catch (InterruptedException | IOException e) {
             return new LoginResponse(false, "Le serveur est inaccessible pour le moment. Merci de réesayer ultérieurement.");
+        }
+    }
+
+    public ProductResponse makeGetProductRequest(String barcode) {
+        String apiUrl = apiUrlPrefix.concat("/products/".concat(barcode));
+
+        // Build the POST request
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(apiUrl))
+                .header("Php-Auth-Digest", "Bearer ".concat(TokenManager.loadToken()))
+                .GET()
+                .build();
+
+        // Send the request and handle the response
+        try {
+            // Synchronous request (blocking)
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            // Check the status code and print the response
+            if (response.statusCode() == 200) {
+                JSONObject jsonObject = new JSONObject(response.body());
+                return new ProductResponse(true, jsonObject.getString("name"), jsonObject.getDouble("price"), jsonObject.getString("barcode"));
+            } else {
+                JSONObject jsonObject = new JSONObject(response.body());
+                return new ProductResponse(false, "", 0, "");
+            }
+        } catch (InterruptedException | IOException e) {
+            return new ProductResponse(false, "", 0, "");
         }
     }
 }
