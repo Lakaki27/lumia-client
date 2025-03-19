@@ -3,8 +3,11 @@ package com.lumia;
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) {
@@ -18,6 +21,12 @@ public class Main {
 
         MainFrame mainFrame = new MainFrame();
         mainFrame.setUndecorated(true);
+
+        try {
+            mainFrame.setIconImage(ImageIO.read(new File("logo.png")));
+        } catch (IOException e) {
+            mainFrame.setIconImage(mainFrame.getIconImage());
+        }
 
         GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice device = env.getDefaultScreenDevice();

@@ -18,7 +18,7 @@ public class Ticket {
 
     public boolean print() {
         System.out.println(articlesSumUp.toString());
-        System.out.println("Total: ".concat(String.valueOf(totalPrice)).concat("€"));
+        System.out.println("Total: " + String.valueOf(totalPrice) + "€");
         return true;
     }
 }
