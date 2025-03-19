@@ -8,6 +8,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -48,7 +50,10 @@ public class ApiRequest {
     public LoginResponse makeLoginRequest(String email, String password) {
         String apiUrl = apiUrlPrefix.concat("/auth/login");
 
+        String serial = "1423456974855896";
+
         Map<String, String> formData = Map.of(
+                "serial", serial,
                 "email", email,
                 "password", password
         );
@@ -66,25 +71,19 @@ public class ApiRequest {
                     .append(entry.getValue()).append("\r\n");
         }
 
-        // Add closing boundary to signify the end of the body
         bodyBuilder.append("--").append(boundary).append("--\r\n");
 
-        // Get the body content as a string
         String body = bodyBuilder.toString();
 
-        // Build the POST request
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(apiUrl))
                 .header("Content-Type", "multipart/form-data; boundary=" + boundary)
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
 
-        // Send the request and handle the response
         try {
-            // Synchronous request (blocking)
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            // Check the status code and print the response
             if (response.statusCode() == 200) {
                 JSONObject jsonObject = new JSONObject(response.body());
                 return new LoginResponse(true, jsonObject.getString("token"));
@@ -100,19 +99,15 @@ public class ApiRequest {
     public ProductResponse makeGetProductRequest(String barcode) {
         String apiUrl = apiUrlPrefix.concat("/products/".concat(barcode));
 
-        // Build the POST request
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(apiUrl))
                 .header("Php-Auth-Digest", "Bearer ".concat(TokenManager.loadToken()))
                 .GET()
                 .build();
 
-        // Send the request and handle the response
         try {
-            // Synchronous request (blocking)
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            // Check the status code and print the response
             if (response.statusCode() == 200) {
                 JSONObject jsonObject = new JSONObject(response.body());
                 return new ProductResponse(true, jsonObject.getString("name"), jsonObject.getDouble("price"), jsonObject.getString("barcode"));
@@ -122,6 +117,46 @@ public class ApiRequest {
             }
         } catch (InterruptedException | IOException e) {
             return new ProductResponse(false, "", 0, "");
+        }
+    }
+
+    public boolean confirmBasket(List<Map<String, String>> products, boolean isAcquired) {
+        String isSoldOrAcquiredUrl = "sell";
+
+        if (isAcquired) {
+            isSoldOrAcquiredUrl = "acquire";
+        }
+
+        String apiUrl = apiUrlPrefix.concat("/products/".concat(isSoldOrAcquiredUrl));
+
+        JSONArray jsonArray = new JSONArray();
+        for (Map<String, String> product : products) {
+            JSONObject jsonObject = new JSONObject(product);
+            jsonArray.put(jsonObject);
+        }
+
+        JSONObject requestBody = new JSONObject();
+        requestBody.put("products", jsonArray);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(apiUrl))
+                .header("Php-Auth-Digest", "Bearer ".concat(TokenManager.loadToken()))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
+                .build();
+
+        try {
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                JSONObject jsonObject = new JSONObject(response.body());
+                return true;
+            } else {
+                return false;
+            }
+        } catch (InterruptedException | IOException e) {
+            e.printStackTrace();
+            return false;
         }
     }
 }

@@ -14,6 +14,11 @@ import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
 
 public class MainFrame extends JFrame {
     private JPanel currentPanel = new JPanel();
@@ -22,6 +27,9 @@ public class MainFrame extends JFrame {
     JTable articleList;
     JTextField barcodeField = new JTextField();
     JLabel priceLabel = new JLabel();
+    JCheckBox isAcquiring = new JCheckBox();
+
+    private boolean wasTicketPrinted = false;
 
     public MainFrame() {
         setTitle("Client LUMIA");
@@ -227,7 +235,6 @@ public class MainFrame extends JFrame {
     }
 
     private JCheckBox getIsAcquiringCheckbox() {
-        JCheckBox isAcquiring = new JCheckBox();
         isAcquiring.setText("Entrée en stock ?");
         isAcquiring.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         isAcquiring.setFocusable(true);  // Allow the checkbox to gain focus
@@ -317,15 +324,19 @@ public class MainFrame extends JFrame {
         ticketButton.addActionListener(e -> {
             DefaultTableModel dm = (DefaultTableModel) articleList.getModel();
 
-            Object[][] data = new Object[dm.getRowCount()][dm.getColumnCount()];
-            for (int i = 0; i < dm.getRowCount(); i++) {
-                for (int j = 0; j < dm.getColumnCount(); j++) {
-                    data[i][j] = dm.getValueAt(i, j);
-                }
+            int rowCount = dm.getRowCount();
+            List<Article> articles = new ArrayList<>();
+
+            for (int i = 0; i < rowCount; i++) {
+                int amount = (Integer) dm.getValueAt(i, 2);  // "amount" column (assuming it's a double)
+                String name = String.valueOf(dm.getValueAt(i, 0));  // "name" column
+                double unitPrice = (Double) dm.getValueAt(i, 3);  // "price" column (assuming it's a double)
+
+                Article article = new Article(amount, name, unitPrice);
+                articles.add(article);
             }
 
-            double totalPrice = computeTotalPrice();
-            printTicket(data, totalPrice);
+            printTicket(articles);
         });
 
         return ticketButton;
@@ -410,10 +421,44 @@ public class MainFrame extends JFrame {
             }
         });
         validateButton.addActionListener(e -> {
-            DefaultTableModel dm = (DefaultTableModel) articleList.getModel();
+            if (!wasTicketPrinted) {
+                int response = JOptionPane.showConfirmDialog(
+                        null,
+                        "Aucun ticket n'a été imprimé. Valider sans ticket ?",
+                        "Attention",
+                        JOptionPane.YES_NO_OPTION
+                );
 
-            // delete all rows
-            while (dm.getRowCount() > 0) {
+                if (response == JOptionPane.NO_OPTION) {
+                    return;
+                }
+            }
+
+            DefaultTableModel dm = (DefaultTableModel) articleList.getModel();
+            ApiRequest req = new ApiRequest();
+
+            boolean isAcquired = isAcquiring.isSelected();
+
+            int rowCount = dm.getRowCount();
+            List<Map<String, String>> products = new ArrayList<>();
+
+            for (int i = 0; i < rowCount; i++) {
+                Map<String, String> product = new HashMap<>();
+                product.put("barcode", String.valueOf(dm.getValueAt(i, 1)));  // "barcode" column
+                product.put("amount", String.valueOf(dm.getValueAt(i, 2)));   // "amount" column
+                products.add(product);
+            }
+
+             boolean success = req.confirmBasket(products, isAcquired);
+
+             if (!success) {
+                JOptionPane.showMessageDialog(null, "Erreur dans la confirmation de l'achat !");
+                return;
+             }
+
+             barcodeField.setText("");
+
+             while (dm.getRowCount() > 0) {
                 dm.removeRow(0);
             }
         });
@@ -421,9 +466,20 @@ public class MainFrame extends JFrame {
         return validateButton;
     }
 
-    private void printTicket(Object[][] articles, double total) {
-        System.out.println(articles);
-        System.out.println(total);
+    private void printTicket(List<Article> articles) {
+
+        double totalPrice = computeTotalPrice();
+
+        Ticket ticket = new Ticket(articles, totalPrice);
+
+        boolean success = ticket.print();
+
+        if (!success) {
+            JOptionPane.showMessageDialog(null, "Erreur d'impression du ticket !");
+            return;
+        }
+
+        wasTicketPrinted = true;
     }
 
     public void checkAndHandleLoginState() {
