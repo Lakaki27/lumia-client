@@ -112,6 +112,7 @@ public class ApiRequest {
                 JSONObject jsonObject = new JSONObject(response.body());
                 return new ProductResponse(true, jsonObject.getString("name"), jsonObject.getDouble("price"), jsonObject.getString("barcode"));
             } else {
+                System.out.println(response.body().toString());
                 JSONObject jsonObject = new JSONObject(response.body());
                 return new ProductResponse(false, "", 0, "");
             }

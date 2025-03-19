@@ -367,6 +367,12 @@ public class MainFrame extends JFrame {
         addButton.addActionListener(e -> {
             String barcode = barcodeField.getText();
 
+            if (barcodeField.getText().length() != 13) {
+                JOptionPane.showMessageDialog(null, "Code-barre invalide !");
+                barcodeField.setText("");
+                return;
+            }
+
             if (barcode.length() == 0) {
                 return;
             }
@@ -380,6 +386,7 @@ public class MainFrame extends JFrame {
                     int currentCount = (int) model.getValueAt(row, 2);
                     model.setValueAt(currentCount + 1, row, 2);
                     exists = true;
+                    barcodeField.setText(null);
                     break;
                 }
             }
@@ -390,6 +397,7 @@ public class MainFrame extends JFrame {
 
                 if (response.isSuccess()) {
                     model.addRow(new Object[]{response.getProductName(), response.getProductBarcode(), 1, response.getProductPrice()});
+                    barcodeField.setText("");
                 } else {
                     JOptionPane.showMessageDialog(null, "Code-barre invalide !");
                 }
