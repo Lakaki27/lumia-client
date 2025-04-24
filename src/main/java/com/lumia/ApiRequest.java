@@ -28,6 +28,7 @@ public class ApiRequest {
                 .uri(URI.create(apiUrl))
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .header("Php-Auth-Digest", "Bearer ".concat(TokenManager.loadToken()))
+                .header("Client-Serial", TokenManager.getSystemSerial())
                 .POST(HttpRequest.BodyPublishers.ofString(postData, StandardCharsets.UTF_8))
                 .build();
 
@@ -78,6 +79,7 @@ public class ApiRequest {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(apiUrl))
                 .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                .header("Client-Serial", TokenManager.getSystemSerial())
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
 
@@ -102,6 +104,7 @@ public class ApiRequest {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(apiUrl))
                 .header("Php-Auth-Digest", "Bearer ".concat(TokenManager.loadToken()))
+                .header("Client-Serial", TokenManager.getSystemSerial())
                 .GET()
                 .build();
 
@@ -112,7 +115,6 @@ public class ApiRequest {
                 JSONObject jsonObject = new JSONObject(response.body());
                 return new ProductResponse(true, jsonObject.getString("name"), jsonObject.getDouble("price"), jsonObject.getString("barcode"));
             } else {
-                System.out.println(response.body().toString());
                 JSONObject jsonObject = new JSONObject(response.body());
                 return new ProductResponse(false, "", 0, "");
             }
@@ -142,6 +144,7 @@ public class ApiRequest {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(apiUrl))
                 .header("Php-Auth-Digest", "Bearer ".concat(TokenManager.loadToken()))
+                .header("Client-Serial", TokenManager.getSystemSerial())
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
                 .build();

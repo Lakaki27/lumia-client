@@ -40,4 +40,8 @@ public class TokenManager {
 
         return ApiRequest.makeTokenVerificationRequest(currentToken);
     }
+
+    public static String getSystemSerial() {
+        return "1423456974855896";
+    }
 }

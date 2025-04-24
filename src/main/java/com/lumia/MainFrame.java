@@ -56,7 +56,7 @@ public class MainFrame extends JFrame {
             }
         };
 
-        articleList.setRowHeight(50);
+        articleList.setRowHeight(60);
         TableColumnModel columnModel = articleList.getColumnModel();
         columnModel.getColumn(0).setPreferredWidth(1200);
         columnModel.getColumn(0).setMaxWidth(1200);
@@ -153,7 +153,9 @@ public class MainFrame extends JFrame {
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
 
         buttonPanel.add(barcodePanel);
+        buttonPanel.add(Box.createRigidArea(new Dimension(15, 0)));
         buttonPanel.add(addButton);
+        buttonPanel.add(Box.createRigidArea(new Dimension(15, 0)));
         buttonPanel.add(Box.createHorizontalGlue());
         buttonPanel.add(removeButton);
         buttonPanel.setSize(new Dimension(currentPanel.getWidth(), (int) (height * 0.2)));
@@ -227,7 +229,9 @@ public class MainFrame extends JFrame {
             total += secondColumnValue * (thirdColumnValue * 100);
         }
 
-        return total / 100;
+        double roundOff = (double) Math.round(total * 100) / 100;
+
+        return roundOff / 100;
     }
 
     public JTextField getBarcodeField() {
@@ -322,6 +326,19 @@ public class MainFrame extends JFrame {
             }
         });
         ticketButton.addActionListener(e -> {
+            if (isAcquiring.isSelected()) {
+                int response = JOptionPane.showConfirmDialog(
+                        null,
+                        "Cette transaction est marquée comme une entrée en stock.\nVoulez-vous vraiment imprimer un ticket ?",
+                        "Attention",
+                        JOptionPane.YES_NO_OPTION
+                );
+
+                if (response == JOptionPane.NO_OPTION || response == JOptionPane.CLOSED_OPTION) {
+                    return;
+                }
+            }
+
             DefaultTableModel dm = (DefaultTableModel) articleList.getModel();
 
             int rowCount = dm.getRowCount();
@@ -429,7 +446,7 @@ public class MainFrame extends JFrame {
             }
         });
         validateButton.addActionListener(e -> {
-            if (!wasTicketPrinted) {
+            if (!wasTicketPrinted && !isAcquiring.isSelected()) {
                 int response = JOptionPane.showConfirmDialog(
                         null,
                         "Aucun ticket n'a été imprimé. Valider sans ticket ?",
@@ -457,18 +474,21 @@ public class MainFrame extends JFrame {
                 products.add(product);
             }
 
-             boolean success = req.confirmBasket(products, isAcquired);
+            boolean success = req.confirmBasket(products, isAcquired);
 
-             if (!success) {
+            if (!success) {
                 JOptionPane.showMessageDialog(null, "Erreur dans la confirmation de l'achat !");
                 return;
-             }
+            }
 
-             barcodeField.setText("");
+            barcodeField.setText("");
 
-             while (dm.getRowCount() > 0) {
+            while (dm.getRowCount() > 0) {
                 dm.removeRow(0);
             }
+
+            wasTicketPrinted = false;
+            barcodeField.requestFocusInWindow();
         });
 
         return validateButton;

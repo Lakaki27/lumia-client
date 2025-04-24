@@ -22,8 +22,8 @@ public class Article {
     public String getName() {
         String returnedName = name;
 
-        if ( name.length()>20 ) {
-            returnedName = returnedName.substring(0,20).concat("...");
+        if ( name.length()>13 ) {
+            returnedName = returnedName.substring(0,13).concat("...");
         }
 
         return returnedName;
