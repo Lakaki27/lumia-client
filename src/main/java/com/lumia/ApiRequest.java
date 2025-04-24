@@ -14,9 +14,15 @@ import java.util.Map;
 import java.util.UUID;
 
 public class ApiRequest {
-    private final static String apiUrlPrefix = "http://localhost:8080/api/v1";
+    private static String apiUrlPrefix = "" ;
 
     private static final HttpClient client = HttpClient.newHttpClient();
+
+    ApiRequest() {
+        String apiUrlAddress = TokenManager.getServerUrl();
+
+        this.apiUrlPrefix = apiUrlAddress.concat("/api/v1");
+    }
 
     public static boolean makeTokenVerificationRequest(String tokenToVerify) {
         String apiUrl = apiUrlPrefix.concat("/verify-token");

@@ -1,8 +1,6 @@
 package com.lumia;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.Properties;
 
 public class TokenManager {
@@ -29,6 +27,16 @@ public class TokenManager {
         }
     }
 
+    public static String getServerUrl() {
+        try (FileInputStream fis = new FileInputStream("server");
+             InputStreamReader isr = new InputStreamReader(fis);
+             BufferedReader br = new BufferedReader(isr)) {
+            return br.readLine();
+        } catch (IOException e) {
+            return "";
+        }
+    }
+
     public static boolean verifyToken() {
         ApiRequest req = new ApiRequest();
 
@@ -42,6 +50,20 @@ public class TokenManager {
     }
 
     public static String getSystemSerial() {
-        return "1423456974855896";
+        String serial = "";
+        String line;
+
+        try (BufferedReader br = new BufferedReader(new FileReader("/proc/cpuinfo"))) {
+            while ((line = br.readLine()) != null) {
+                if (line.startsWith("Serial")) {
+                    serial = line.split(":")[1].trim();
+                    break;
+                }
+            }
+        } catch (IOException e) {
+            return serial;
+        }
+
+        return serial.isEmpty() ? "1423456974855896" : serial;
     }
 }
