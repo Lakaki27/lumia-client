@@ -42,6 +42,6 @@ public class Article {
     }
 
     public double getTotalPrice() {
-        return unitPrice * amount;
+        return Math.round((unitPrice * amount) * 100.0) / 100.0;
     }
 }

@@ -60,16 +60,25 @@ public class Ticket {
         }
 
         try {
-            Process process = new ProcessBuilder("magick", "-density", "800", filename + ".pdf", filename + ".ps").start();
+            Process process = new ProcessBuilder("magick", "-density", "300", filename + ".pdf", filename + ".ps").start();
             process.waitFor();
         } catch (Exception e) {
-            return false;
+            e.printStackTrace();
+            System.out.println("########## Printing with convert instead ##########");
+            try {
+                Process process = new ProcessBuilder("convert", "-density", "300", filename + ".pdf", filename + ".ps").start();
+                process.waitFor();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                return false;
+            }
         }
 
         try {
             Process process = new ProcessBuilder("lpr", "-P", "POS58", filename + ".ps").start();
             process.waitFor();
         } catch (Exception e) {
+            System.out.println("Printer error");
             return false;
         }
 

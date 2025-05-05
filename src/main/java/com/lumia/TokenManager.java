@@ -64,6 +64,6 @@ public class TokenManager {
             return serial;
         }
 
-        return serial.isEmpty() ? "1423456974855896" : serial;
+        return serial.isEmpty() ? "testtesttesttest" : serial;
     }
 }

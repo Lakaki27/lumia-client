@@ -8,21 +8,14 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 public class ApiRequest {
-    private static String apiUrlPrefix = "" ;
+    private static String apiUrlPrefix = TokenManager.getServerUrl().concat("/api/v1");
 
     private static final HttpClient client = HttpClient.newHttpClient();
-
-    ApiRequest() {
-        String apiUrlAddress = TokenManager.getServerUrl();
-
-        this.apiUrlPrefix = apiUrlAddress.concat("/api/v1");
-    }
 
     public static boolean makeTokenVerificationRequest(String tokenToVerify) {
         String apiUrl = apiUrlPrefix.concat("/verify-token");
@@ -82,25 +75,41 @@ public class ApiRequest {
 
         String body = bodyBuilder.toString();
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(apiUrl))
-                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
-                .header("Client-Serial", TokenManager.getSystemSerial())
-                .POST(HttpRequest.BodyPublishers.ofString(body))
-                .build();
-
         try {
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(apiUrl))
+                    .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                    .header("Client-Serial", TokenManager.getSystemSerial())
+                    .POST(HttpRequest.BodyPublishers.ofString(body))
+                    .build();
+            try {
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            if (response.statusCode() == 200) {
-                JSONObject jsonObject = new JSONObject(response.body());
-                return new LoginResponse(true, jsonObject.getString("token"));
-            } else {
-                JSONObject jsonObject = new JSONObject(response.body());
-                return new LoginResponse(false, jsonObject.getString("message"));
+                if (response.statusCode() == 200) {
+                    JSONObject jsonObject = new JSONObject(response.body());
+                    return new LoginResponse(true, jsonObject.getString("token"));
+                } else {
+                    JSONObject jsonObject = new JSONObject(response.body());
+                    return new LoginResponse(false, jsonObject.getString("message"));
+                }
+            } catch (InterruptedException | IOException e) {
+                return new LoginResponse(false, "Le serveur est inaccessible pour le moment. Merci de réesayer ultérieurement.");
             }
-        } catch (InterruptedException | IOException e) {
-            return new LoginResponse(false, "Le serveur est inaccessible pour le moment. Merci de réesayer ultérieurement.");
+        } catch (java.lang.IllegalArgumentException e) {
+            System.out.println("####################");
+            System.out.println("####################");
+            System.out.println("####################");
+            System.out.println("Prefix is ".concat(apiUrlPrefix));
+            System.out.println("####################");
+            System.out.println("####################");
+            System.out.println("####################");
+            System.out.println("URL is ".concat(apiUrl));
+            System.out.println("####################");
+            System.out.println("####################");
+            System.out.println("####################");
+            e.printStackTrace();
+
+            return new LoginResponse(false, "Erreur de connexion au serveur !");
         }
     }
 
