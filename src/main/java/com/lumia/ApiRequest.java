@@ -50,7 +50,7 @@ public class ApiRequest {
     public LoginResponse makeLoginRequest(String email, String password) {
         String apiUrl = apiUrlPrefix.concat("/auth/login");
 
-        String serial = "1423456974855896";
+        String serial = TokenManager.getSystemSerial();
 
         Map<String, String> formData = Map.of(
                 "serial", serial,
@@ -82,9 +82,11 @@ public class ApiRequest {
                     .header("Client-Serial", TokenManager.getSystemSerial())
                     .POST(HttpRequest.BodyPublishers.ofString(body))
                     .build();
+
+            String thisBody = "";
             try {
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
+                thisBody = response.body();
                 if (response.statusCode() == 200) {
                     JSONObject jsonObject = new JSONObject(response.body());
                     return new LoginResponse(true, jsonObject.getString("token"));
@@ -92,7 +94,8 @@ public class ApiRequest {
                     JSONObject jsonObject = new JSONObject(response.body());
                     return new LoginResponse(false, jsonObject.getString("message"));
                 }
-            } catch (InterruptedException | IOException e) {
+            } catch (Exception e) {
+                System.out.println(thisBody);
                 return new LoginResponse(false, "Le serveur est inaccessible pour le moment. Merci de réesayer ultérieurement.");
             }
         } catch (java.lang.IllegalArgumentException e) {

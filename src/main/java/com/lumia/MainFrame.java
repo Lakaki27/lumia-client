@@ -198,9 +198,8 @@ public class MainFrame extends JFrame {
         validateButtonsPanelLayout.setHgap(10);
         JPanel validateButtonsPanel = new JPanel(validateButtonsPanelLayout);
 
-        JButton ticketButton = getTicketButton();
-
         JButton validateButton = getValidateButton();
+        JButton ticketButton = getTicketButton();
 
         validateButtonsPanel.add(ticketButton);
         validateButtonsPanel.add(validateButton);
@@ -495,7 +494,6 @@ public class MainFrame extends JFrame {
     }
 
     private void printTicket(List<Article> articles) {
-
         double totalPrice = computeTotalPrice();
 
         Ticket ticket = new Ticket(articles, totalPrice);
